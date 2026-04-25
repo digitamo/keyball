@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define SOFT_SERIAL_PIN         D2
 #define SPLIT_HAND_MATRIX_GRID  F6, B5
 #define SPLIT_HAND_MATRIX_GRID_LOW_IS_LEFT
+#define KEYBALL_SCROLL_DIV_DEFAULT 6  // 1/32 divisor (slower: default is 4=1/8)
 #define SPLIT_USB_DETECT
 #define SPLIT_USB_TIMEOUT       500
 #ifdef OLED_ENABLE
