@@ -6,6 +6,7 @@ set -e
 
 QMK_REPO="${QMK_REPO:-/tmp/qmk}"
 KEYMAP="${1:-via}"
+OUTPUT_FILE="keyball_keyball39_${KEYMAP}.hex"
 
 echo "Building keyball39:$KEYMAP..."
 
@@ -23,8 +24,8 @@ fi
 cd "$QMK_REPO"
 make SKIP_GIT=yes keyball/keyball39:"$KEYMAP"
 
-# Copy output
-OUTPUT_DIR="${HOME}/Downloads"
-cp .build/keyball_keyball39_"$KEYMAP".hex "$OUTPUT_DIR/"
+# Copy output to local folder
+cp .build/"$OUTPUT_FILE" "$(pwd)/"
 
-echo "Built: $OUTPUT_DIR/keyball_keyball39_${KEYMAP}.hex"
+echo ""
+echo "Built: $(pwd)/$OUTPUT_FILE"
