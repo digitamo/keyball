@@ -33,7 +33,10 @@ const uint16_t AML_TIMEOUT_MIN = 100;
 const uint16_t AML_TIMEOUT_MAX = 1000;
 const uint16_t AML_TIMEOUT_QU  = 50;   // Quantization Unit
 
-static const char BL = '\xB0'; // Blank indicator character
+enum {
+    BL = '\xB0',
+};
+
 static const char LFSTR_ON[] PROGMEM = "\xB2\xB3";
 static const char LFSTR_OFF[] PROGMEM = "\xB4\xB5";
 
@@ -185,11 +188,12 @@ __attribute__((weak)) void keyball_on_apply_motion_to_mouse_move(keyball_motion_
     m->y = 0;
 }
 
-__attribute__((weak)) void keyball_on_apply_motion_to_mouse_scroll(keyball_motion_t *m, report_mouse_t *r, bool is_left) {
-    // consume motion of trackball.
-    int16_t div = 1 << (keyball_get_scroll_div() - 1);
-    int16_t x = divmod16(&m->x, div);
-    int16_t y = divmod16(&m->y, div);
+static void motion_to_mouse_scroll(keyball_motion_t *m, report_mouse_t *r, bool is_left) {
+    // consume motion of trackball with independent divisors for X and Y
+    int16_t div_v = 1 << (KEYBALL_SCROLL_DIV_V_DEFAULT - 1);
+    int16_t div_h = 1 << (KEYBALL_SCROLL_DIV_H_DEFAULT - 1);
+    int16_t x = divmod16(&m->x, div_v);
+    int16_t y = divmod16(&m->y, div_h);
 
     // apply to mouse report.
 #if KEYBALL_MODEL == 61 || KEYBALL_MODEL == 39 || KEYBALL_MODEL == 147 || KEYBALL_MODEL == 44

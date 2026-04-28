@@ -28,6 +28,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #    define KEYBALL_SCROLL_DIV_DEFAULT 4 // 4: 1/8 (1/2^(n-1))
 #endif
 
+#ifndef KEYBALL_SCROLL_DIV_V_DEFAULT
+#    define KEYBALL_SCROLL_DIV_V_DEFAULT KEYBALL_SCROLL_DIV_DEFAULT // vertical scroll divisor
+#endif
+
+#ifndef KEYBALL_SCROLL_DIV_H_DEFAULT
+#    define KEYBALL_SCROLL_DIV_H_DEFAULT KEYBALL_SCROLL_DIV_DEFAULT // horizontal scroll divisor
+#endif
+
 #ifndef KEYBALL_REPORTMOUSE_INTERVAL
 #    define KEYBALL_REPORTMOUSE_INTERVAL 8 // mouse report rate: 125Hz
 #endif

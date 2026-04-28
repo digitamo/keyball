@@ -50,3 +50,34 @@ The area enclosed in parentheses may be replaced by a trackball.
 <https://config.qmk.fm/#/test> is useful for testing keys.
 
 [remap]:https://remap-keys.app/
+
+## Build Guide
+
+### Prerequisites
+
+- QMK 0.24.0 (verified working)
+- For other QMK versions, you may need to change `static const char BL` to `enum { BL }` in `keyball.c` for GCC 12+ compatibility
+
+### Build Steps
+
+```bash
+# 1. Clone QMK firmware
+git clone --depth 1 --recurse-submodules --shallow-submodules -b 0.24.0 \
+  https://github.com/qmk/qmk_firmware.git /tmp/qmk
+
+# 2. Link keyball keyboards
+ln -sf /path/to/keyball/qmk_firmware/keyboards/keyball /tmp/qmk/keyboards/keyball
+
+# 3. Build
+cd /tmp/qmk && make SKIP_GIT=yes keyball/keyball39:default
+```
+
+### Troubleshooting
+
+#### Reversed sides (left/right swapped)
+If the keyboard halves are reversed (e.g., left half acts as right), add to `keyball39/config.h`:
+```c
+#define SPLIT_HAND_MATRIX_GRID_LOW_IS_LEFT
+```
+
+This fixes the side detection when using `SPLIT_HAND_MATRIX_GRID` for handedness detection.
