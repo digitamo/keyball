@@ -4,9 +4,13 @@
 
 set -e
 
-QMK_REPO="${QMK_REPO:-/tmp/qmk}"
+QMK_REPO="${QMK_REPO:-$HOME/.cache/qmk_firmware}"
 KEYMAP="${1:-via}"
 OUTPUT_FILE="keyball_keyball39_${KEYMAP}.hex"
+SRC_DIR="$(pwd)"
+
+# Keg-only Homebrew toolchains required by QMK
+export PATH="/opt/homebrew/opt/avr-gcc@8/bin:/opt/homebrew/opt/arm-none-eabi-gcc@8/bin:$PATH"
 
 echo "Building keyball39:$KEYMAP..."
 
@@ -17,15 +21,15 @@ if [ ! -d "$QMK_REPO" ]; then
 		https://github.com/qmk/qmk_firmware.git "$QMK_REPO"
 
 	# Link keyball keyboards
-	ln -sf "$(pwd)/qmk_firmware/keyboards/keyball" "$QMK_REPO/keyboards/keyball"
+	ln -sf "$SRC_DIR/qmk_firmware/keyboards/keyball" "$QMK_REPO/keyboards/keyball"
 fi
 
 # Build
 cd "$QMK_REPO"
 make SKIP_GIT=yes keyball/keyball39:"$KEYMAP"
 
-# Copy output to local folder
-cp .build/"$OUTPUT_FILE" "$(pwd)/"
+# Copy output to source folder
+cp ".build/$OUTPUT_FILE" "$SRC_DIR/"
 
 echo ""
-echo "Built: $(pwd)/$OUTPUT_FILE"
+echo "Built: $SRC_DIR/$OUTPUT_FILE"
