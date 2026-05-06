@@ -104,6 +104,12 @@ void oledkit_render_logo_user(void) {
         last_frame_change = timer_read();
         show_b = !show_b;
     }
-    oled_write_raw_P(show_b ? frame_b : frame_a, sizeof(frame_a));
+    // Slave OLED is rotated 270, so the buffer is page-major in display
+    // coords: 32 cols × 16 pages = 512 bytes. The frame is 32×24 (3 pages),
+    // so byte offset 13 × 32 = 416 places it at rows 104..127 (bottom).
+    const char *frame = show_b ? frame_b : frame_a;
+    for (uint16_t i = 0; i < sizeof(frame_a); i++) {
+        oled_write_raw_byte(pgm_read_byte(&frame[i]), 416 + i);
+    }
 }
 #endif
