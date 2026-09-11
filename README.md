@@ -41,3 +41,30 @@ See [document for firmware source code](./qmk_firmware/keyboards/keyball/readme.
 ### Pre-compiled Firmwares
 
 (TO BE DOCUMENTED)
+
+### Flashing (Keyball39, WSL + Windows host)
+
+This machine is WSL2, so flashing happens on the Windows side with QMK Toolbox.
+
+1. Build the firmware from WSL:
+
+    ```sh
+    ./build.sh via
+    ```
+
+    This produces `keyball_keyball39_via.hex` in the repo root.
+
+2. Copy the hex to the Windows host, keeping the version suffix used in past flashes:
+
+    ```sh
+    cp keyball_keyball39_via.hex /mnt/c/Users/osama/Downloads/keyball_keyball39_via_v7.hex
+    ```
+
+3. On Windows, open QMK Toolbox (`C:\Program Files\QMK Toolbox\qmk_toolbox.exe`),
+   open the hex, and set MCU to `atmega32u4` with flash method `AVR109 (Caterina)`.
+
+4. Plug in one half and put its ProMicro in bootloader mode: double-tap the
+   reset switch soldered on that half's PCB (or short RST and GND on the
+   ProMicro twice). A new `Arduino Micro` COM port appears, then click Flash.
+
+5. Repeat for the other half. Both halves need the same firmware.
