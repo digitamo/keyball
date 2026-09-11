@@ -1,11 +1,12 @@
 #!/bin/bash
 # Build script for keyball39 firmware
-# Usage: ./build.sh [default|via]
+# Usage: ./build.sh [default|via] [output-dir]
 
 set -e
 
 QMK_REPO="${QMK_REPO:-$HOME/.cache/qmk_firmware}"
 KEYMAP="${1:-via}"
+OUTPUT_DIR="${2:-$(pwd)}"
 OUTPUT_FILE="keyball_keyball39_${KEYMAP}.hex"
 SRC_DIR="$(pwd)"
 
@@ -32,8 +33,8 @@ fi
 cd "$QMK_REPO"
 make SKIP_GIT=yes keyball/keyball39:"$KEYMAP"
 
-# Copy output to source folder
-cp ".build/$OUTPUT_FILE" "$SRC_DIR/"
+# Copy output to target directory
+cp ".build/$OUTPUT_FILE" "$OUTPUT_DIR/"
 
 echo ""
-echo "Built: $SRC_DIR/$OUTPUT_FILE"
+echo "Built: $OUTPUT_DIR/$OUTPUT_FILE"
