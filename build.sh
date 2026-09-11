@@ -9,8 +9,12 @@ KEYMAP="${1:-via}"
 OUTPUT_FILE="keyball_keyball39_${KEYMAP}.hex"
 SRC_DIR="$(pwd)"
 
-# Keg-only Homebrew toolchains required by QMK
-export PATH="/opt/homebrew/opt/avr-gcc@8/bin:/opt/homebrew/opt/arm-none-eabi-gcc@8/bin:$PATH"
+# Toolchains: QMK prebuilt on Linux, keg-only Homebrew toolchains on macOS
+if [ -d "$HOME/.cache/qmk_toolchains/qmk_toolchains_linuxX64/bin" ]; then
+	export PATH="$HOME/.cache/qmk_toolchains/qmk_toolchains_linuxX64/bin:$PATH"
+else
+	export PATH="/opt/homebrew/opt/avr-gcc@8/bin:/opt/homebrew/opt/arm-none-eabi-gcc@8/bin:$PATH"
+fi
 
 echo "Building keyball39:$KEYMAP..."
 
