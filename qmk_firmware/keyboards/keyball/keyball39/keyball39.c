@@ -37,10 +37,21 @@ matrix_row_t matrix_mask[MATRIX_ROWS] = {
 
 void keyball_on_adjust_layout(keyball_adjust_t v) {
 #ifdef RGBLIGHT_ENABLE
-    // adjust RGBLIGHT's clipping and effect ranges
+    // rgblight_led_index() subtracts clipping_start_pos from every effect
+    // index, so the effect range must start at the clipping start. Otherwise
+    // the first indices underflow and ws2812_set_color() writes past
+    // ws2812_leds[] into whatever follows it in RAM.
     uint8_t lednum_this = keyball.this_have_ball ? 22 : 24;
     uint8_t lednum_that = !keyball.that_enable ? 0 : keyball.that_have_ball ? 22 : 24;
-    rgblight_set_clipping_range(is_keyboard_left() ? 0 : lednum_that, lednum_this);
-    rgblight_set_effect_range(0, lednum_this + lednum_that);
+    uint8_t start = is_keyboard_left() ? 0 : lednum_that;
+    if (start >= RGBLIGHT_LED_COUNT) {
+        return;
+    }
+    uint8_t count = lednum_this;
+    if (start + count > RGBLIGHT_LED_COUNT) {
+        count = RGBLIGHT_LED_COUNT - start;
+    }
+    rgblight_set_clipping_range(start, count);
+    rgblight_set_effect_range(start, count);
 #endif
 }

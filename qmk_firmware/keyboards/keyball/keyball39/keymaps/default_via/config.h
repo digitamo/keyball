@@ -35,5 +35,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define TAP_CODE_DELAY 5
 
+// No keymap uses one-shot keys, and Chordal Hold needs the flash space.
+#define NO_ACTION_ONESHOT
+
+// Home row mods: opposite-hand chords hold, same-hand rolls stay letters, and
+// a same-hand chord holds only when the modifier went down first. See
+// get_chordal_hold() and chordal_hold_handedness() in keymap.c.
+#define TAPPING_TERM 250
+#define PERMISSIVE_HOLD_PER_KEY
+#define CHORDAL_HOLD
+
 #define POINTING_DEVICE_AUTO_MOUSE_ENABLE
 #define AUTO_MOUSE_DEFAULT_LAYER 1

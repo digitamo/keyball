@@ -45,26 +45,39 @@ See [document for firmware source code](./qmk_firmware/keyboards/keyball/readme.
 ### Flashing (Keyball39, WSL + Windows host)
 
 This machine is WSL2, so flashing happens on the Windows side with QMK Toolbox.
+`build.sh` pins QMK 0.28.0 and caches it in `~/.cache/qmk_firmware_0.28.0`.
 
 1. Build the firmware from WSL:
 
     ```sh
-    ./build.sh via
+    ./build.sh default            # or: ./build.sh via
     ```
 
-    This produces `keyball_keyball39_via.hex` in the repo root.
+    This produces `keyball_keyball39_default.hex` or
+    `keyball_keyball39_default_via.hex` in the repo root.
 
-2. Copy the hex to the Windows host, keeping the version suffix used in past flashes:
+2. Copy the hex to the Windows host:
 
     ```sh
-    cp keyball_keyball39_via.hex /mnt/c/Users/osama/Downloads/keyball_keyball39_via_v7.hex
+    cp keyball_keyball39_default.hex /mnt/c/Users/osama/Downloads/keyball_keyball39_default_v10.hex
     ```
 
 3. On Windows, open QMK Toolbox (`C:\Program Files\QMK Toolbox\qmk_toolbox.exe`),
-   open the hex, and set MCU to `atmega32u4` with flash method `AVR109 (Caterina)`.
+   turn **Auto-flash off**, open the hex, and set MCU to `atmega32u4` with flash
+   method `AVR109 (Caterina)`. Auto-flash re-sends whatever file is already
+   loaded, which is how an old build gets flashed over and over.
 
 4. Plug in one half and put its ProMicro in bootloader mode: double-tap the
    reset switch soldered on that half's PCB (or short RST and GND on the
    ProMicro twice). A new `Arduino Micro` COM port appears, then click Flash.
 
-5. Repeat for the other half. Both halves need the same firmware.
+5. Check the avrdude output: it must name the file you just copied and report
+   the expected byte count. `Flash complete` alone does not prove anything.
+
+6. Repeat for the other half, moving the USB cable to it. Both halves need the
+   same firmware.
+
+Changing QMK versions resets the EEPROM on first boot, which wipes VIA remaps,
+the RGB mode, and the Keyball pointer settings (CPI, scroll divisor, scroll
+snap, auto-mouse). Re-set them on layer 3 and press `KBC_SAVE` once on the
+master.

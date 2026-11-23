@@ -20,6 +20,110 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "quantum.h"
 
+// Rows 0-3 are the left half, rows 4-7 the right half. Thumb keys are
+// exempt from the opposite-hands rule so their layer-taps keep the plain
+// tapping-term behavior.
+char chordal_hold_handedness(keypos_t key) {
+    if (key.row == 3) {
+        return key.col < 3 ? 'L' : '*';
+    }
+    if (key.row == 7) {
+        return key.col < 3 ? 'R' : '*';
+    }
+    return key.row < 4 ? 'L' : 'R';
+}
+
+// Only home-row mod-taps settle as held on a nested tap. Thumb layer-taps
+// keep the default timing so a fast space roll never changes layers.
+bool get_permissive_hold(uint16_t keycode, keyrecord_t *record) {
+    return IS_QK_MOD_TAP(keycode);
+}
+
+// Same-hand chords may hold when they are deliberate: the modifier goes down
+// first and the letter follows. Fast same-hand rolls stay letters. Must stay
+// below TAPPING_TERM, since Chordal Hold stops applying once it expires.
+#define SAME_HAND_HOLD_MS 120
+
+_Static_assert(SAME_HAND_HOLD_MS < TAPPING_TERM, "SAME_HAND_HOLD_MS must stay below TAPPING_TERM");
+
+bool get_chordal_hold(uint16_t tap_hold_keycode, keyrecord_t *tap_hold_record, uint16_t other_keycode, keyrecord_t *other_record) {
+    if (tap_hold_record->event.type != KEY_EVENT || other_record->event.type != KEY_EVENT) {
+        return true;
+    }
+    const char tap_hand   = chordal_hold_handedness(tap_hold_record->event.key);
+    const char other_hand = chordal_hold_handedness(other_record->event.key);
+    if (tap_hand == '*' || other_hand == '*' || tap_hand != other_hand) {
+        return true;
+    }
+    const int16_t dt = (int16_t)(other_record->event.time - tap_hold_record->event.time);
+    return dt < 0 || dt >= SAME_HAND_HOLD_MS;
+}
+
+#ifdef RGBLIGHT_ENABLE
+// QMK 0.28 dropped the handler for the per-mode RGB keycodes. Map the
+// contiguous keycode range back onto the effect enum. Effects this keymap
+// does not compile in fall back to static light.
+static const uint8_t PROGMEM rgb_mode_target[] = {
+    RGBLIGHT_MODE_STATIC_LIGHT,
+#ifdef RGBLIGHT_EFFECT_BREATHING
+    RGBLIGHT_MODE_BREATHING,
+#else
+    RGBLIGHT_MODE_STATIC_LIGHT,
+#endif
+#ifdef RGBLIGHT_EFFECT_RAINBOW_MOOD
+    RGBLIGHT_MODE_RAINBOW_MOOD,
+#else
+    RGBLIGHT_MODE_STATIC_LIGHT,
+#endif
+#ifdef RGBLIGHT_EFFECT_RAINBOW_SWIRL
+    RGBLIGHT_MODE_RAINBOW_SWIRL,
+#else
+    RGBLIGHT_MODE_STATIC_LIGHT,
+#endif
+#ifdef RGBLIGHT_EFFECT_SNAKE
+    RGBLIGHT_MODE_SNAKE,
+#else
+    RGBLIGHT_MODE_STATIC_LIGHT,
+#endif
+#ifdef RGBLIGHT_EFFECT_KNIGHT
+    RGBLIGHT_MODE_KNIGHT,
+#else
+    RGBLIGHT_MODE_STATIC_LIGHT,
+#endif
+#ifdef RGBLIGHT_EFFECT_CHRISTMAS
+    RGBLIGHT_MODE_CHRISTMAS,
+#else
+    RGBLIGHT_MODE_STATIC_LIGHT,
+#endif
+#ifdef RGBLIGHT_EFFECT_STATIC_GRADIENT
+    RGBLIGHT_MODE_STATIC_GRADIENT,
+#else
+    RGBLIGHT_MODE_STATIC_LIGHT,
+#endif
+#ifdef RGBLIGHT_EFFECT_RGB_TEST
+    RGBLIGHT_MODE_RGB_TEST,
+#else
+    RGBLIGHT_MODE_STATIC_LIGHT,
+#endif
+#ifdef RGBLIGHT_EFFECT_TWINKLE
+    RGBLIGHT_MODE_TWINKLE,
+#else
+    RGBLIGHT_MODE_STATIC_LIGHT,
+#endif
+};
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    if (IS_RGB_KEYCODE(keycode)) {
+        if (record->event.pressed) {
+            // _noeeprom: the EEPROM write blocks the split link for ~10 ms.
+            rgblight_mode_noeeprom(pgm_read_byte(&rgb_mode_target[keycode - RGB_MODE_PLAIN]));
+        }
+        return false;
+    }
+    return true;
+}
+#endif
+
 // clang-format off
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // Layer 0 — alphas + home-row mods, layer-tap thumbs
@@ -72,44 +176,10 @@ void oledkit_render_info_user(void) {
     keyball_oled_render_layerinfo();
 }
 
-// Luna 2-frame idle sit, ported from filterpaper's QMK Luna animation
-// (github.com/filterpaper/qmk_oled_animations/blob/main/oled_luna.c, GPL-2.0+),
-// itself derived from HellSingCoder's original Luna for the Sofle.
-// Frames are 32x24 (96 bytes) oriented for OLED_ROTATION_270 — see the
-// oled_init_user override below that switches the slave to that rotation.
-oled_rotation_t oled_init_user(oled_rotation_t rotation) {
-    return is_keyboard_master() ? rotation : OLED_ROTATION_270;
-}
-
-void oledkit_render_logo_user(void) {
-    static const char PROGMEM frame_a[] = {
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xE0, 0x1C,
-        0x02, 0x05, 0x02, 0x24, 0x04, 0x04, 0x02, 0xA9, 0x1E, 0xE0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xE0, 0x10, 0x08, 0x68, 0x10, 0x08, 0x04, 0x03, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x06, 0x82, 0x7C, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x04, 0x0C, 0x10, 0x10, 0x20, 0x20, 0x20, 0x28,
-        0x3E, 0x1C, 0x20, 0x20, 0x3E, 0x0F, 0x11, 0x1F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    };
-    static const char PROGMEM frame_b[] = {
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xE0, 0x1C,
-        0x02, 0x05, 0x02, 0x24, 0x04, 0x04, 0x02, 0xA9, 0x1E, 0xE0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0xE0, 0x90, 0x08, 0x18, 0x60, 0x10, 0x08, 0x04, 0x03, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x0E, 0x82, 0x7C, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x04, 0x0C, 0x10, 0x10, 0x20, 0x20, 0x20, 0x28,
-        0x3E, 0x1C, 0x20, 0x20, 0x3E, 0x0F, 0x11, 0x1F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    };
-    static uint16_t last_frame_change = 0;
-    static bool show_b = false;
-    if (timer_elapsed(last_frame_change) > 600) {
-        last_frame_change = timer_read();
-        show_b = !show_b;
-    }
-    // Slave OLED is rotated 270, so the buffer is page-major in display
-    // coords: 32 cols × 16 pages = 512 bytes. The frame is 32×24 (3 pages),
-    // so byte offset 13 × 32 = 416 places it at rows 104..127 (bottom).
-    const char *frame = show_b ? frame_b : frame_a;
-    for (uint16_t i = 0; i < sizeof(frame_a); i++) {
-        oled_write_raw_byte(pgm_read_byte(&frame[i]), 416 + i);
-    }
+// Both halves render the same status screen. The slave never processes key
+// records, so its key line stays at R0 C0 K00.
+bool oled_task_user(void) {
+    oledkit_render_info_user();
+    return true;
 }
 #endif

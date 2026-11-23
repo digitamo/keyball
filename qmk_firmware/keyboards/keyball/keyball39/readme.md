@@ -58,7 +58,7 @@ make keyball/keyball39:default
 Available keymaps:
 - `default` - Default keymap
 - `test` - Test keymap
-- `via` - VIA-enabled keymap
+- `default_via` - VIA-enabled keymap
 - `develop` - Development keymap
 
 ### Flash the Firmware
