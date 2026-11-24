@@ -38,11 +38,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // No keymap uses one-shot keys, and Chordal Hold needs the flash space.
 #define NO_ACTION_ONESHOT
 
-// Home row mods: opposite-hand chords hold, same-hand rolls stay letters, and
-// a same-hand chord holds only when the modifier went down first. See
-// get_chordal_hold() and chordal_hold_handedness() in keymap.c.
+// Home-row mods use chordal hold; the right mouse-layer thumb holds on press.
 #define TAPPING_TERM 250
 #define PERMISSIVE_HOLD_PER_KEY
+#define HOLD_ON_OTHER_KEY_PRESS_PER_KEY
 #define CHORDAL_HOLD
 
 #define POINTING_DEVICE_AUTO_MOUSE_ENABLE

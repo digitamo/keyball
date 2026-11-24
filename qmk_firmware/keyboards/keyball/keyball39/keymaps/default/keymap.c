@@ -21,8 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "quantum.h"
 
 // Rows 0-3 are the left half, rows 4-7 the right half. Thumb keys are
-// exempt from the opposite-hands rule so their layer-taps keep the plain
-// tapping-term behavior.
+// exempt from the opposite-hands rule.
 char chordal_hold_handedness(keypos_t key) {
     if (key.row == 3) {
         return key.col < 3 ? 'L' : '*';
@@ -33,15 +32,18 @@ char chordal_hold_handedness(keypos_t key) {
     return key.row < 4 ? 'L' : 'R';
 }
 
-// Only home-row mod-taps settle as held on a nested tap. Thumb layer-taps
-// keep the default timing so a fast space roll never changes layers.
+// Mod-taps settle as held on a nested tap; space rolls keep default timing.
 bool get_permissive_hold(uint16_t keycode, keyrecord_t *record) {
     return IS_QK_MOD_TAP(keycode);
 }
 
-// Same-hand chords may hold when they are deliberate: the modifier goes down
-// first and the letter follows. Fast same-hand rolls stay letters. Must stay
-// below TAPPING_TERM, since Chordal Hold stops applying once it expires.
+// The right thumb activates the mouse layer as soon as another key is pressed.
+bool get_hold_on_other_key_press(uint16_t keycode, keyrecord_t *record) {
+    return keycode == LT(1, KC_BSPC);
+}
+
+// Protect same-hand home-row rolls. Other chords use normal hold settlement.
+// This must stay below TAPPING_TERM, when Chordal Hold stops applying.
 #define SAME_HAND_HOLD_MS 120
 
 _Static_assert(SAME_HAND_HOLD_MS < TAPPING_TERM, "SAME_HAND_HOLD_MS must stay below TAPPING_TERM");
@@ -53,6 +55,10 @@ bool get_chordal_hold(uint16_t tap_hold_keycode, keyrecord_t *tap_hold_record, u
     const char tap_hand   = chordal_hold_handedness(tap_hold_record->event.key);
     const char other_hand = chordal_hold_handedness(other_record->event.key);
     if (tap_hand == '*' || other_hand == '*' || tap_hand != other_hand) {
+        return true;
+    }
+    const uint8_t home_row = tap_hand == 'L' ? 1 : 5;
+    if (tap_hold_record->event.key.row != home_row || other_record->event.key.row != home_row) {
         return true;
     }
     const int16_t dt = (int16_t)(other_record->event.time - tap_hold_record->event.time);
